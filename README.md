@@ -1,4 +1,4 @@
-** DVC (Data Version Control) with Amazon S3 **
+**DVC (Data Version Control) with Amazon S3**
 
 DVC (Data Version Control) is an open-source tool used in Machine Learning and MLOps to version and manage:
 
@@ -11,7 +11,7 @@ DVC works together with Git to provide version control for both code and data.
 
 Git is for code and metadata, DVC is for data versioning, and Amazon S3 stores the actual large files.
 
-Table of Contents
+**Table of Contents**
 Overview
 Architecture
 Git vs DVC
