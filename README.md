@@ -1,53 +1,47 @@
-# DVC (Data Version Control) with Amazon S3
+** DVC (Data Version Control) with Amazon S3 **
 
 DVC (Data Version Control) is an open-source tool used in Machine Learning and MLOps to version and manage:
 
-- Large datasets
-- Machine-learning models
-- ML pipelines
-- Experiment data
+Large datasets
+Machine-learning models
+ML pipelines
+Experiment data
 
-DVC works together with Git to provide version control for both **code and data**.
+DVC works together with Git to provide version control for both code and data.
 
-> **Git is for code and metadata, DVC is for data versioning, and Amazon S3 stores the actual large files.**
+Git is for code and metadata, DVC is for data versioning, and Amazon S3 stores the actual large files.
 
----
+Table of Contents
+Overview
+Architecture
+Git vs DVC
+Main Uses of DVC
+Project Architecture
+Prerequisites
+Installing DVC
+Initialize Git
+Initialize DVC
+Add Dataset to DVC
+Configure Amazon S3 Remote
+Verify Remote
+Configure AWS Credentials
+Commit DVC Metadata to Git
+Push Dataset to S3
+Download Dataset
+Check DVC Status
+Restore Dataset
+Complete Workflow
+Important DVC Commands
+Project Structure
+Experiment Reproducibility
+Team Collaboration
+Security Considerations
+Troubleshooting
+Quick Reference
+Conclusion
+Overview
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Git vs DVC](#git-vs-dvc)
-- [Main Uses of DVC](#main-uses-of-dvc)
-- [Project Architecture](#project-architecture)
-- [Prerequisites](#prerequisites)
-- [Installing DVC](#installing-dvc)
-- [Initialize Git](#1-initialize-git)
-- [Initialize DVC](#2-initialize-dvc)
-- [Add Dataset to DVC](#3-add-dataset-to-dvc)
-- [Configure Amazon S3 Remote](#4-configure-amazon-s3-remote)
-- [Verify Remote](#5-verify-the-dvc-remote)
-- [Configure AWS Credentials](#6-configure-aws-credentials)
-- [Commit DVC Metadata to Git](#7-commit-dvc-metadata-to-git)
-- [Push Dataset to S3](#8-push-the-dataset-to-s3)
-- [Download Dataset](#9-download-the-dataset)
-- [Check DVC Status](#10-check-dvc-status)
-- [Restore Dataset](#11-restore-dataset)
-- [Complete Workflow](#complete-workflow)
-- [Important DVC Commands](#important-dvc-commands)
-- [Project Structure](#project-structure)
-- [Experiment Reproducibility](#experiment-reproducibility)
-- [Team Collaboration](#team-collaboration)
-- [Security Considerations](#security-considerations)
-- [Troubleshooting](#troubleshooting)
-- [Quick Reference](#quick-reference)
-- [Conclusion](#conclusion)
-
----
-
-# Overview
-
-Machine Learning projects depend on both **source code and data**.
+Machine Learning projects depend on both source code and data.
 
 Git works very well for source code, configuration files, and documentation. However, storing large datasets and ML models directly in Git is not ideal.
 
@@ -55,7 +49,6 @@ DVC solves this problem by allowing large datasets and ML artifacts to be versio
 
 The overall concept is:
 
-```text
 Git
  │
  │ Tracks code and DVC metadata
@@ -145,54 +138,51 @@ Git
          DVC
           │
           ↓
-     Remote Storage
+     Amazon S3
           │
-          ↓
-     Actual Dataset
+          └── Actual dataset
 
 Main Uses of DVC
 1. Version Datasets
 
 DVC allows different versions of a dataset to be tracked.
 
-For example:
-
 Dataset Version 1
 Dataset Version 2
 Dataset Version 3
 
 
-You can return to an older dataset version when reproducing previous experiments.
+You can return to an older dataset version when required for experiment reproduction or debugging.
 
 2. Store Large Files Outside Git
 
-Large datasets should generally not be stored directly inside Git.
-
-For example:
+Instead of committing a large dataset directly to Git:
 
 customer_churn.csv
 
 
-is tracked by DVC using:
+DVC creates a small metadata file:
 
 customer_churn.csv.dvc
 
 
-The .dvc file is small and can be committed to Git.
-
-The actual dataset is stored in the DVC remote.
+The relationship is:
 
 GitHub
  │
  └── customer_churn.csv.dvc
-
-Amazon S3
- │
- └── Actual customer_churn.csv
+          │
+          ↓
+         DVC
+          │
+          ↓
+     Amazon S3
+          │
+          └── Actual customer_churn.csv
 
 3. Use Cloud Storage
 
-DVC supports multiple remote storage systems, including:
+DVC supports several remote storage systems:
 
 Amazon S3
 Google Cloud Storage
@@ -201,11 +191,11 @@ SSH storage
 MinIO
 Other supported DVC remotes
 
-This project uses Amazon S3 as the DVC remote.
+This project uses Amazon S3.
 
 4. Reproduce ML Experiments
 
-DVC allows you to associate a specific:
+DVC allows a particular dataset version to be associated with a particular code version and model result.
 
 Code Version
      +
@@ -214,62 +204,31 @@ Dataset Version
 Model Result
 
 
-This makes ML experiments reproducible.
-
-For example:
-
-Git Commit A
-    │
-    ├── Code Version A
-    └── Dataset Version A
-             │
-             ↓
-        Model Result A
-
-
-Later:
-
-Git Commit B
-    │
-    ├── Code Version B
-    └── Dataset Version B
-             │
-             ↓
-        Model Result B
+This makes ML experiments more reproducible.
 
 5. Share Datasets With a Team
 
-DVC allows a team to use a common remote storage location.
-
-Team members can download the required data using:
+Team members can download the required dataset from the common DVC remote:
 
 dvc pull
 
-
-This avoids manually transferring large datasets between developers.
-
 6. Track ML Models
 
-DVC can also manage large ML model files.
-
-Examples include:
+DVC can also manage large ML model files such as:
 
 model.pkl
 model.joblib
 model.pt
 model.h5
 
-
-The model metadata can be tracked through Git while the actual model can be stored in remote storage.
-
 Project Architecture
 
-This project uses a customer churn dataset:
+This project uses the following dataset:
 
 customer_churn.csv
 
 
-The architecture is:
+The project architecture is:
 
                   GitHub
                      │
@@ -306,11 +265,11 @@ GitHub
 
 Prerequisites
 
-Before starting, make sure the following are installed or available:
+Before starting, make sure the following are available:
 
 Git
 DVC
-Homebrew (macOS)
+Homebrew for macOS
 AWS CLI
 AWS account
 Amazon S3 bucket
@@ -321,10 +280,12 @@ The S3 bucket used in this project is:
 
 dvc-mlops-poc
 
-Installing DVC
-macOS
 
-Install DVC using Homebrew:
+Important: Never commit AWS credentials, access keys, or secret keys to GitHub.
+
+Installing DVC
+
+On macOS, DVC can be installed using Homebrew:
 
 brew install dvc
 
@@ -333,12 +294,9 @@ Verify the installation:
 
 dvc --version
 
-
-If DVC is installed correctly, the command will display the installed DVC version.
-
 1. Initialize Git
 
-If the project is not already a Git repository, initialize Git:
+If Git has not already been initialized:
 
 git init
 
@@ -347,13 +305,6 @@ Check the repository status:
 
 git status
 
-
-Git will be responsible for tracking:
-
-Source code
-Configuration
-Documentation
-DVC metadata
 2. Initialize DVC
 
 Initialize DVC inside the Git repository:
@@ -363,9 +314,7 @@ dvc init
 
 This creates the .dvc directory.
 
-The project will now contain both Git and DVC metadata.
-
-Example:
+The project will now contain both Git and DVC metadata:
 
 project/
 │
@@ -386,12 +335,12 @@ Add the dataset to DVC:
 dvc add data/customer_churn.csv
 
 
-DVC will create:
+DVC creates:
 
 data/customer_churn.csv.dvc
 
 
-The directory will look like:
+The directory now looks like:
 
 data/
 ├── customer_churn.csv
@@ -414,26 +363,18 @@ DVC creates:
 data/customer_churn.csv.dvc
 
 
-Conceptually, the .dvc file contains information such as:
-
-Dataset path
-Dataset hash
-File information
-DVC metadata
-
-
-The important distinction is:
+Conceptually:
 
 customer_churn.csv
         │
-        └── Actual dataset
+        └── Actual large dataset
 
 customer_churn.csv.dvc
         │
         └── DVC metadata
 
 
-The .dvc file is small and can be committed to Git.
+The .dvc file can be committed to Git because it is small.
 
 4. Configure Amazon S3 Remote
 
@@ -446,22 +387,21 @@ dvc      remote      add      -d      dvc-poc       s3://dvc-mlops-poc
  │         │          │       │           │                 │
  │         │          │       │           │                 └── S3 location
  │         │          │       │           └── Remote name
- │         │          │       └── Set as default remote
+ │         │          │       └── Default remote
  │         │          └── Add remote
  │         └── Remote management
  └── DVC command
 
-Parameters
-Parameter	Meaning
+Parameter	Description
 dvc	DVC command-line tool
 remote	Manage remote storage
 add	Add a remote
--d	Set the remote as default
-dvc-poc	Name of the DVC remote
+-d	Set as default remote
+dvc-poc	Remote name
 s3://dvc-mlops-poc	S3 bucket location
 5. Verify the DVC Remote
 
-List the configured DVC remotes:
+List configured DVC remotes:
 
 dvc remote list
 
@@ -470,9 +410,6 @@ Expected output:
 
 dvc-poc    s3://dvc-mlops-poc
 
-
-This confirms that the S3 bucket has been configured as a DVC remote.
-
 Check DVC Configuration
 
 Display the DVC configuration:
@@ -480,7 +417,7 @@ Display the DVC configuration:
 cat .dvc/config
 
 
-You may see:
+Example:
 
 ['remote "dvc-poc"']
     url = s3://dvc-mlops-poc
@@ -489,7 +426,7 @@ You may see:
     remote = dvc-poc
 
 
-This configuration means:
+This configuration indicates:
 
 dvc-poc is the remote name.
 The remote points to the S3 bucket.
@@ -503,7 +440,7 @@ dvc push
 
 AWS credentials must be configured.
 
-If AWS CLI is installed, run:
+Using the AWS CLI:
 
 aws configure
 
@@ -516,9 +453,9 @@ Default region
 Default output format
 
 
-The AWS credentials must have sufficient permissions to access the S3 bucket.
+The configured AWS identity must have permission to access the S3 bucket.
 
-Important: Never commit AWS access keys, secret keys, passwords, or other credentials to GitHub.
+Security: Never commit AWS access keys or secret keys to GitHub.
 
 7. Commit DVC Metadata to Git
 
@@ -537,7 +474,7 @@ check the Git status:
 git status
 
 
-You may see files such as:
+You may see:
 
 .dvc/
 .gitignore
@@ -554,7 +491,7 @@ Commit the changes:
 git commit -m "Configure DVC S3 remote"
 
 
-Git now tracks the DVC metadata required to identify the dataset version.
+At this point, Git tracks the DVC metadata while DVC manages the actual dataset.
 
 8. Push the Dataset to S3
 
@@ -563,9 +500,9 @@ Upload the actual dataset to the configured DVC remote:
 dvc push
 
 
-DVC will upload the required data to the S3-backed DVC remote.
+The data is uploaded to the S3-backed DVC remote.
 
-The important distinction is:
+The resulting architecture is:
 
 GitHub
 │
@@ -583,18 +520,18 @@ Amazon S3
 └── DVC-managed dataset objects
 
 
-The actual dataset is stored in S3, not directly in Git.
+The actual dataset is stored in S3 rather than directly in Git.
 
 9. Download the Dataset
 
 When another developer clones the Git repository, the actual dataset may not exist locally.
 
-They can retrieve the dataset using:
+Run:
 
 dvc pull
 
 
-The process is:
+DVC reads the metadata tracked in Git and downloads the required data from Amazon S3.
 
 GitHub
    │
@@ -612,12 +549,12 @@ GitHub
 
 10. Check DVC Status
 
-Check whether the local dataset is synchronized with the DVC-tracked version:
+Check whether the local dataset is synchronized:
 
 dvc status
 
 
-This can help identify changes between the local data and the tracked DVC state.
+This helps identify differences between the local workspace and the DVC-tracked state.
 
 11. Restore Dataset
 
@@ -642,98 +579,11 @@ Git Commit B
 Dataset Version B
 
 
-If you switch Git commits, DVC can restore the corresponding dataset version.
+After switching Git commits, dvc checkout can restore the corresponding dataset version.
 
-Experiment Reproducibility
-
-One of the main advantages of using Git and DVC together is experiment reproducibility.
-
-Suppose an old experiment used:
-
-Code Version A
-Dataset Version A
-Model Result A
-
-
-Later, the project changes:
-
-Code Version B
-Dataset Version B
-Model Result B
-
-
-To reproduce the old experiment:
-
-Checkout old Git commit
-          │
-          ↓
-    dvc checkout
-          │
-          ↓
- Restore old dataset
-          │
-          ↓
-   Run ML pipeline
-          │
-          ↓
- Reproduce old result
-
-
-This provides a connection between:
-
-Code
-  +
-Data
-  +
-Model
-
-Team Collaboration
-
-DVC is useful when multiple ML engineers or developers work on the same project.
-
-A shared architecture can look like:
-
-                    GitHub
-                       │
-            ┌──────────┴──────────┐
-            │                     │
-       Source Code          DVC Metadata
-                                  │
-                                  ↓
-                                 DVC
-                                  │
-                                  ↓
-                            Amazon S3
-                                  │
-                                  ↓
-                           Shared Dataset
-
-
-A new team member can clone the repository:
-
-git clone <repository-url>
-
-
-Then download the dataset:
-
-dvc pull
-
-
-This avoids manually sharing large datasets between team members.
-
-Important DVC Commands
-Command	Purpose
-dvc init	Initialize DVC
-dvc add <file>	Start tracking a dataset or file
-dvc remote add	Configure remote storage
-dvc remote list	List configured remotes
-dvc push	Upload data to remote storage
-dvc pull	Download data from remote storage
-dvc status	Check data synchronization
-dvc checkout	Restore data according to DVC metadata
 Complete Workflow
 
-The complete workflow used in this project is:
+The complete workflow for this project is:
 
 Initialize Git
       │
@@ -765,9 +615,6 @@ Run dvc push
 Dataset stored in Amazon S3
 
 Data Flow
-
-The complete data flow can be represented as:
-
                     LOCAL MACHINE
                          │
                          │
@@ -794,9 +641,19 @@ The complete data flow can be represented as:
                          ↓
               Actual Dataset Storage
 
+Important DVC Commands
+Command	Purpose
+dvc init	Initialize DVC
+dvc add <file>	Start tracking a dataset/file
+dvc remote add	Configure remote storage
+dvc remote list	List configured remotes
+dvc push	Upload data to remote storage
+dvc pull	Download data from remote storage
+dvc status	Check data synchronization
+dvc checkout	Restore data according to DVC metadata
 Project Structure
 
-A typical ML project using DVC can have the following structure:
+A typical ML project using DVC can look like:
 
 ml-project/
 │
@@ -820,56 +677,86 @@ ml-project/
 ├── .gitignore
 └── requirements.txt
 
+Experiment Reproducibility
 
-The exact project structure may vary depending on the application.
+One of the biggest advantages of using Git and DVC together is experiment reproducibility.
 
-Git, DVC, and S3 Responsibilities
-Git
+Suppose an old experiment used:
 
-Git tracks:
+Code Version A
+Dataset Version A
+Model Result A
 
-Source code
-Configuration
-Documentation
-DVC metadata
-Dataset version references
-DVC
 
-DVC manages:
+A later experiment may use:
 
-Dataset versions
-Large files
-ML models
-Data dependencies
-Data transfer between local and remote storage
-Amazon S3
+Code Version B
+Dataset Version B
+Model Result B
 
-Amazon S3 stores:
 
-Actual datasets
-Large ML artifacts
-DVC-managed objects
-Model files
+To reproduce the old experiment:
 
-The relationship is:
-
-Git
- │
- └── Code + Metadata
+Checkout old Git commit
           │
           ↓
-         DVC
+    dvc checkout
           │
-          └── Data Version Management
-                    │
-                    ↓
-                   S3
-                    │
-                    └── Actual Data
+          ↓
+ Restore old dataset
+          │
+          ↓
+   Run ML pipeline
+          │
+          ↓
+ Reproduce old result
+
+
+This provides a reproducible relationship between:
+
+Code
+  +
+Data
+  +
+Model
+
+Team Collaboration
+
+DVC makes it easier for multiple ML engineers and developers to work with the same datasets.
+
+The shared architecture can look like:
+
+                    GitHub
+                       │
+            ┌──────────┴──────────┐
+            │                     │
+       Source Code          DVC Metadata
+                                  │
+                                  ↓
+                                 DVC
+                                  │
+                                  ↓
+                            Amazon S3
+                                  │
+                                  ↓
+                           Shared Dataset
+
+
+A new team member can clone the repository:
+
+git clone <repository-url>
+
+
+Then download the dataset:
+
+dvc pull
+
+
+This avoids manually sharing large datasets between developers.
 
 Security Considerations
 
-AWS credentials must never be committed to GitHub.
+AWS credentials should never be committed to GitHub.
 
 Do not commit files containing:
 
@@ -881,19 +768,19 @@ Passwords
 API keys
 
 
-Use secure AWS authentication mechanisms and follow the principle of least privilege when granting permissions.
+Use secure AWS authentication mechanisms and follow the principle of least privilege when granting S3 permissions.
 
-For production environments, use appropriate IAM roles or other secure AWS credential mechanisms instead of storing long-lived credentials in the project.
+For production environments, use appropriate IAM roles or other secure AWS credential mechanisms.
 
 Troubleshooting
 DVC Command Not Found
 
-If you receive an error indicating that DVC is not installed:
+If DVC is not installed:
 
 brew install dvc
 
 
-Then verify:
+Verify:
 
 dvc --version
 
@@ -947,13 +834,13 @@ dvc status
 If the dataset was intentionally modified and should represent a new version, update the DVC tracking information and commit the resulting .dvc metadata change to Git.
 
 Quick Reference
-Installation
+Install DVC
 brew install dvc
 
-Git Initialization
+Initialize Git
 git init
 
-DVC Initialization
+Initialize DVC
 dvc init
 
 Track Dataset
@@ -983,16 +870,13 @@ dvc push
 Download Dataset
 dvc pull
 
-Check DVC Status
+Check Status
 dvc status
 
 Restore Dataset
 dvc checkout
 
-End-to-End Example
-
-The following commands represent the complete setup:
-
+End-to-End Command Reference
 # Install DVC
 brew install dvc
 
@@ -1079,20 +963,10 @@ GitHub
 
 In simple terms:
 
-Git   → Tracks code and data metadata
-DVC   → Versions and manages data
-S3    → Stores the actual large data
+Git → Tracks code and data metadata
+DVC → Versions and manages data
+S3  → Stores the actual large data
 
-
-This combination provides a practical foundation for:
-
-Dataset versioning
-ML model versioning
-Experiment reproducibility
-Team collaboration
-Large file management
-Cloud-based data storage
-MLOps workflows
 Conclusion
 
 DVC extends Git-based version control to datasets and machine-learning artifacts that are too large or unsuitable for direct Git storage.
@@ -1123,4 +997,12 @@ DVC Push
 Amazon S3
 
 
-This setup enables reproducible, collaborative, and scalable Machine Learning and MLOps workflows.
+This setup provides a practical foundation for:
+
+Dataset versioning
+ML model versioning
+Experiment reproducibility
+Team collaboration
+Large file management
+Cloud-based data storage
+MLOps workflows
