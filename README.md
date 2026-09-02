@@ -1,5 +1,3 @@
-Yes. Below is the complete README.md content as a single Markdown file. Copy everything inside the code block into a file named README.md.
-
 # DVC (Data Version Control) with Amazon S3
 
 DVC (Data Version Control) is an open-source tool used in Machine Learning and MLOps to version and manage:
